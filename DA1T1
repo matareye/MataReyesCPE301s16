@@ -1,0 +1,14 @@
+LDI R16, low(RAMEND/2)		;Load Low byte of RAMEND/2 into R16
+OUT SPL, R16				;Load R16 into SPL
+LDI R16, high(RAMEND/2)		;Load High byte of RAMEND/2 into R16
+OUT SPH, R16				;Load R16 into  SPH
+LDI ZL, SPL
+LDI R17, 1				;Set R17=1
+L1:	LPM R20, Z			;load z into R20, update R20 
+	INC ZL					;Increment ZL
+	INC R17					;R17=R17+1
+	CPI R17, 24				;Compare if R17=24
+	BREQ END				;Jump to END if R17=24
+	BRNE L1
+
+END: RJMP END
