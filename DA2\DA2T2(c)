@@ -1,0 +1,44 @@
+#define F_CPU 1000000UL 		//XTAL=1MHZ
+#include <avr/io.h>
+#include<util/delay.h>
+
+int main()
+{
+	void delay_ms(int d)
+	{
+	_delay_ms(d);
+	}
+	unsigned char i;
+	DDRB=0x00;
+	DDRC=0x01;				//PortC.0 is an output
+	i=127;					
+	OCR1A=127;				//duty cycle=50%
+	
+	while(i!=0)
+	{
+		OCR1A=i;
+		_delay_ms(500);
+		TCNT1H=0xF4;
+		_delay_ms(500);
+		TCNT1L=0X23;			//TCNT1=0xF423 for prescaler 8 CTC
+		_delay_ms(500);
+		OCR1BH=0x7A;
+		-delay_ms(500);
+		OCR1BL=0x11;			//OCR1B=0x7A11, prescaler 8
+		_delay_ms(500);
+		TCCR1B=0x0A;		//8 prescaler, WGM13:12 01, where WGM is 0100 for CTC
+		_delay_ms(500);
+
+		OCR1AH=0x0;
+		_delay_ms(500);
+		OCR1AL=0x02;
+		_delay_ms(500);
+		while((TIFR1&0x01) == 0);	//Read TIFR1
+		TCCR1B=0;		//Stop Timer1
+		TIFR1 |= 1<<OCF1A;		//Clear TIFR1 by writing 1 to OCF1A
+		i++;
+	}
+	DDRC=0x0;
+
+	return 0;
+}
