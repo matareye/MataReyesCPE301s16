@@ -1,0 +1,39 @@
+		LDI R16, HIGH(RAMEND)
+		OUT SPH, R16
+		LDI R16, LOW (RAMEND)
+		OUT SPL, R16				;initialize stack pointer
+
+		CBI DDRB, 1				;PB1 T1 is input
+		SBI DDRC, 0				;PortC.0 as output
+BEGIN:  SBI PORTC, 0					;set to High PCO
+		RCALL DELAY				;call delay subroutine
+		CBI PORTC, 0				;PortC.0=0
+		RCALL DELAY				;Call Delay
+		RJMP BEGIN
+DELAY:  LDI R20, HIGH(62500-1)
+		STS TCNT1H, R20			;0xF4
+		LDI R20, LOW(62500-1)
+		STS TCNT1L, R20			;0x23 ,  TCNT1=0xF423
+		LDI R20, HIGH(31250-1)
+		STS OCR1BH, R20			;OCR1BH=7A
+		LDI R20, LOW(31250-1)
+		STS OCR1BL, R20			;OCR1BL=11, OCR1B=0x7A11
+		LDI R20, 0x0
+		STS TCCR1A, R20			;WGM11:10=00
+		LDI R20, 0x0F
+		STS TCCR1B, R20			;8 prescaler, CTC, RISING EDGE
+AGAIN:  	LDI R20, 0
+		STS OCR1AH, R20
+		LDI R20, 2
+		STS OCR1AL, R20
+L1: IN R20, TIFR1					;Read TIFR1
+		SBRS R20, OCF1A			;if OCF1A is set skip next instruction
+		RJMP L1		
+		LDI R20, 0x00
+		STS TCCR1B, R20			;Stop timer1
+		LDI R20, (1<<OCF1A)
+		STS TIFR1, R20			;Clear TIFR1 by writing 1 to OCF1A
+SBI PORTC, 0			;PCO=1
+CBI PORTC, O			;PC0=0
+RJMP AGAIN
+		RET
