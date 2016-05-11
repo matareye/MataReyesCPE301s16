@@ -1,0 +1,77 @@
+//References: https://faculty.unlv.edu/eelabs/docs/labs/cpe301L/cpe301L_09_experiment_9.pdf
+// https://docs.google.com/viewer?a=v&pid=sites&srcid=dW5sdi5lZHV8dW5sdmNwZTMwMXxneDoxOWVjNGMzMzA4MWU1YjJh
+
+
+#include <avr/io.h>
+#include <util/delay.h>
+
+#include <avr/interrupt.h>
+#define LCD_DPRT PORTD //LCD DATA PORT
+#define LCD_DDDR DDRD //LCD DATA DDR
+#define LCD_DPIN PIND //LCD DATA PIN
+#define LCD_CPRT PORTB //LCD COMMANDS PORT
+#define LCD_CDDR DDRB //LCD COMMANDS DDR
+#define LCD_CPIN PINB //LCD COMMANDS PIN
+#define LCD_RS 0 //LCD RS
+#define LCD_RW 1 //LCD RW
+#define LCD_EN 2 //LCD EN
+
+volatile uint8_t ADCvalue;
+volatile uint8_t temp;
+
+#define F_CPU 8000000UL // XTAL = 8MHz
+
+
+int main(void)
+{
+	LCD_DDDR=0xFF;
+	LCD_CDDR=0xFF;
+	
+	ADMUX=0;			//use ADC0
+	ADMUX |=(1<< REFS0);  // use AVcc as the reference
+	ADMUX |= (1<<ADLAR);  // Right adjust for 8 bit resolution
+	ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // 128 prescale for 16Mhz
+	ADCSRA |= (1 << ADATE); // Set ADC Auto Trigger Enable
+	ADCSRB = 0; // 0 for free running mode
+	ADCSRA |= (1 << ADEN); // Enable the ADC
+	ADCSRA |= (1 << ADIE); // Enable Interrupts
+	ADCSRA |= (1 << ADSC); // Start the ADC conversion
+	sei();
+	temp=ADCvalue;
+	temp=temp*(10/1024); 
+	lcd_init();
+	lcd_print(temp);
+	
+    while(1){ 
+    }
+}
+ISR(ADC_vect){
+
+	ADCvalue = ADC;
+}
+
+void lcd_init()
+{
+	LCD_DDDR = 0xFF;
+	LCD_CDDR = 0xFF;
+	LCD_CPRT &=~(1<<LCD_EN); //LCD_EN = 0
+	_delay_ms(2000); //wait for init
+}
+
+void lcdData(unsigned char data)
+{
+	LCD_DPRT = data; //send data to data port
+	LCD_CPRT |= (1<<LCD_RS); //RS = 1 for data
+	LCD_CPRT &= ~(1<<LCD_RW); //RW = 0 for write
+	LCD_CPRT |= (1<<LCD_EN); //EN = 1 for H-to-L pulse
+	_delay_ms(1); //wait to make enable wide
+	LCD_CPRT &= ~(1<<LCD_EN); //EN = 0 for H-to_L pulse
+	_delay_ms(100); //wait to make enable wide
+}
+void lcd_print(char* str){
+	unsigned char i=0;
+	while(str[i]!=0){
+		lcdData(str[i]);
+		i++;
+	}
+}
