@@ -1,0 +1,40 @@
+#include <avr/io.h
+#include <avr/io.h>
+#define F_CPU 1000000UL   //XTAL 1=MHz
+int main(){
+unsigned char i;
+DDRB = 0x08;                   //PB3 as output
+DDRD=0xff;		//Set all PortD as output
+PORTB=0x00;		//Set output high- turn all LEDs off
+i=25;
+OCROA=25;			//duty cycle = 10% for one PWM signal
+OCR1A=25;			//duty cycle = 10% for the second PWM signal
+OCR2A=25;			//duty cycle = 10% for the third PWM signal
+TCCR0A = 0xC1;			//Phase correct PWM for the 1st PWM signal
+TCCR0B = 0x03;			//N=64
+TCCR1A = 0xC1;			//Phase correct PWM for the 2nd PWM signal
+TCCR1B = 0x03;			//N=64
+TCCR2A = 0xC1;			//Phase correct PWM for the 3rd PWM signal
+TCCR2B = 0x03;			//N=64
+for (;;){
+ /* dimm LED on */
+for (i=0; i<255; i++)
+{
+OCR0AL=i;
+OCR1AL = i; //Note OCR1AL NOT OCR1A
+OCR2AL=i;
+PORTB=i;
+_delay_ms(30); 
+}
+/* dimm LED off */
+for( i=255; i>0; i--)
+{
+OCR0AL=i;
+OCR1AL = i; //Note OCR1AL NOT OCR1A
+OCR2AL=i;
+PORTB=i;
+_delay_ms(30); 
+}
+}
+return 0;
+}
