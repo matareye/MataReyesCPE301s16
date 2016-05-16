@@ -1,0 +1,23 @@
+#define F_CPU 8000000UL 		//XTAL=8MHZ
+#include <avr/io.h>
+#include<util/delay.h>
+
+int main()
+{
+
+	unsigned char i;
+	unsigned char j;
+	
+	
+	while(1)
+	{
+		i=(1<<PORTC5);		//set PC5 HIGH
+		_delay_ms(100);
+		j=(1<<PORTC6);		//set PC6 High
+		
+		_delay_ms(100);
+
+		PORTC=0x55;
+	}
+	return 0;
+}
