@@ -1,0 +1,64 @@
+       LDI R16, HIGH(RAMEND)
+	OUT SPH, R16
+	LDI R16, LOW(RAMEND)
+	OUT SPL, R16
+	
+	SBI DDRC, 5			;PC5 as an output
+	SBI DDRC, 4			;PC6 as an output
+	LDI R16, 0xFF
+	OUT DDRB, R16		       ;PORTB as an output
+	LDI R18, 0			
+	LDI R21, 0			
+	LDI R22, 0			
+	LDI R23, 0x00		      ;toggle pin 4
+	LDI R24, 0x00		      ;toggle pin 5
+
+BEGIN:SBI PORTC, 0     ;Set PC0 as an output
+	RCALL DELAY
+	CBI PORTC, 0       ;Set to High PCO (PC0=1)
+	BRNE SKIP
+	INC	R18				
+	INC R21				
+	INC R22			
+	CPI R21, 5			
+	BREQ NEXT			
+SKIP:
+	OUT PORTB, R18		;toggle PB5
+	RJMP BEGIN			
+
+NEXT:
+	LDI R21, 0
+	LDI R16, 0x10
+	IN R23, PORTC
+	EOR R23,  R16
+	OUT PORTC,R23		;toggle
+	LDI R16, 0x01
+	RJMP NEXTAGAIN
+
+NEXTAGAIN:
+	LDI R22, 0
+	LDI	R16, 0x20
+	EOR R24, R16		;toggle
+	OUT PORTC, R24
+	LDI R16, 0x01
+	RJMP SKIP
+
+DELAY:
+	LDI R20, HIGH(34286)
+	STS TCNT1H, R20		;TCNT1H = 0xA4 
+	LDI R20, LOW(34286)
+	STS TCNT1L, R20		;TCNT1L = 0x72 
+	LDI R20,0x00
+	STS TCCR1A, R20		;WGM11:10 = 00
+	LDI R20,0x03
+	STS TCCR1B, R20		;WGM13:12 = 05, Normal mode,  1024
+
+AGAIN:
+	IN R20,TIFR1		;read TIFR
+	SBRS R20,TOV1		;if TOV1 is set skip next instruction
+	RJMP AGAIN
+	LDI R20,0x00
+	STS TCCR1B,R20		;stop Timer1
+	LDI R20,0xFF
+	OUT TIFR1, R20		;clear TOV1 flag
+	RET
