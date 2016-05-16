@@ -1,1 +1,53 @@
+//References https://learn.adafruit.com/adafruit-huzzah-esp8266-breakout/using-nodemcu-lua
+//http://www.avrfreaks.net/forum/mpu6050-and-atmega328p-peter-fleury-implementation-problem
+
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+#include <string.h>
+#include "i2cmaster.h"
+
+#define SSID belkin.452
+#define PASS 2e968269
+#define IP "184.106.153.149" // ThingSpeak IP Address: 184.106.153.149
+//string GET = "GET /update?key=[ThingSpeak_(Write)API_KEY]";
+
+unsigned char ret;
+int16_t accelerometer[3];
+int16_t gyro[3];
+double AcX, AcY, AcZ;
+double GyX, GyY, GyZ;
+
+#define MPU6050 0xD0
+
+int main(void)
+{
+	i2c_init();			//init I2C interface
+	_delay_ms(500);		//Delay of 500 ms
+
+
+    while(1)
+    {
+       ret=i2c_start(MPU6050+I2C_WRITE);	//set device and write mode
+	   if(ret){
+		i2c_stop();   
+	   }
+	   else{
+		i2c_write(0x6B);     // go to register 107
+       i2c_write(0x00);     // set value to 0x00 and wake up sensor
+       i2c_stop();          // set stop conditon = release bus
+ 
+       i2c_start_wait(MPU6050+I2C_WRITE);     // set device address and write mode
+       i2c_write(0x3B);                       // accel_xout
+       i2c_rep_start(MPU6050+I2C_READ);       // set device address and read mode
+       ret = i2c_readNak();                   // read one byte
+	   ret = (ret <<8) | i2c_readNak();		  // read last byte
+       i2c_stop();
+	   
+      
+			}
+	}	   
+			   
+}
 
